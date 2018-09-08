@@ -1,48 +1,86 @@
-require("dotenv").config();
-var express = require("express");
+// ==============================================================================
+// DEPENDENCIES
+// ==============================================================================
+
+var passportSetup = require("./config/passport");
+
+var keys = require("./config/keys");
+
 var bodyParser = require("body-parser");
+
+// ==============================================================================
+// EXPRESS CONFIGURATION
+// ==============================================================================
+
+// Express dependency
+var express = require("express");
+
+// Tells node that we are creating an "express" server
+var app = express();
+
+// Sets an initial port. We"ll use this later in our listener
+var PORT = process.env.PORT || 8080;
+
+app.use(bodyParser.urlencoded({
+	extended: true
+}));
+
+app.use(bodyParser.json());
+
+// =============================================================================
+// FLASH MESSAGES (OPTIONAL)
+// =============================================================================
+
+var flash = require('connect-flash');
+
+app.use(flash());
+
+// =============================================================================
+// COOKIES!!!!!!
+// =============================================================================
+
+var session  = require('express-session');
+
+var passport = require('passport');
+
+// required for passport
+app.use(session({
+	secret: 'thisappisalwaysrunning',
+	resave: true,
+	saveUninitialized: true
+})); // session secret
+
+app.use(passport.initialize());
+
+app.use(passport.session()); // persistent login sessions
+
+// =============================================================================
+// HANDLEBARS
+// =============================================================================
+
 var exphbs = require("express-handlebars");
 
-var db = require("./models");
-
-var app = express();
-var PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(express.static("public"));
-
-// Handlebars
-app.engine(
-  "handlebars",
-  exphbs({
-    defaultLayout: "main"
-  })
-);
+app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-// Routes
-require("./routes/apiRoutes")(app);
-require("./routes/htmlRoutes")(app);
+// =============================================================================
+// ROUTES
+// =============================================================================
 
-var syncOptions = { force: false };
+// Import routes and give the server access to them.
+var routes = require("./routes/routes.js");
 
-// If running a test, set syncOptions.force to true
-// clearing the `testdb`
-if (process.env.NODE_ENV === "test") {
-  syncOptions.force = true;
-}
+app.use("/", routes);
 
-// Starting the server, syncing our models ------------------------------------/
-db.sequelize.sync(syncOptions).then(function() {
-  app.listen(PORT, function() {
-    console.log(
-      "==> 🌎  Listening on port %s. Visit http://localhost:%s/ in your browser.",
-      PORT,
-      PORT
-    );
-  });
+// Home
+app.get("/", function(req, res) {
+    res.render("index");
 });
 
-module.exports = app;
+// =============================================================================
+// LISTENER
+// =============================================================================
+
+app.listen(PORT, function() {
+    console.log("App listening on PORT: " + PORT);
+  });
