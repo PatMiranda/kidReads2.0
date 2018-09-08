@@ -1,0 +1,112 @@
+CREATE DATABASE KidReads_DB;
+USE KidReads_DB;
+
+CREATE TABLE LibraryBooks (
+  ISBN VARCHAR(50) NOT NULL,
+  Title VARCHAR(75) NOT NULL,
+  Author VARCHAR(40) NOT NULL,
+  Description TEXT NOT NULL,
+  Available BOOLEAN NOT NULL,
+  PageCount INT NOT NULL,
+  LastMod TIMESTAMP DEFAULT NOW() ON UPDATE NOW(),
+
+  PRIMARY KEY (ISBN) 
+);
+
+CREATE TABLE LibraryBooks_Setup (
+    BookId INT NOT NULL AUTO_INCREMENT,
+    ISBN VARCHAR(50) NOT NULL,
+    PageCount INT NOT NULL,
+    LastMod DATETIME NOT NULL,
+    PageText TEXT NULL,
+    PageFont VARCHAR(50) NULL,
+    PageFontColor VARCHAR(50) NULL,
+    PageFontSize INT NULL,
+    PageImageFilePath VARCHAR(200),
+    PageAudioFilePath VARCHAR(200),
+
+    PRIMARY KEY (BookId),
+    FOREIGN KEY fk_ISBN(ISBN)
+    REFERENCES LibraryBooks(ISBN)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+);
+
+CREATE TABLE ParentUser (
+    ParentId VARCHAR(20) NOT NULL,
+    ChildId VARCHAR(20) NOT NULL,
+    EmailAddress VARCHAR(50) NOT NULL,
+    UserName VARCHAR(20) NOT NULL,
+    Password VARCHAR(20) NOT NULL,
+    FirstName VARCHAR(25) NOT NULL,
+    LastName VARCHAR(25) NOT NULL,
+    AddressStreet1 VARCHAR(50) NULL,
+    AddressStreet2 VARCHAR(50) NULL,
+    AddressCity VARCHAR(25) NULL,
+    AddressState VARCHAR(2) NULL,
+    AddressZip VARCHAR(10) NULL,
+    LastSignOn DATETIME NULL,
+    LastMod TIMESTAMP DEFAULT NOW() ON UPDATE NOW(),
+
+    PRIMARY KEY(ParentId)
+);
+
+CREATE TABLE ChildUser(
+    ChildId VARCHAR(20) NOT NULL,
+    ParentId VARCHAR(20) NOT NULL,
+    UserName VARCHAR(20) NOT NULL,
+    Password VARCHAR(20) NOT NULL,
+    FirstName VARCHAR(25) NOT NULL,
+    LastName VARCHAR(25) NULL,
+    Birthday VARCHAR(5) NULL,
+    LastSignOn DATETIME NULL,
+    LastMod TIMESTAMP DEFAULT NOW() ON UPDATE NOW(),
+
+    PRIMARY KEY (ChildId)
+);
+
+ALTER TABLE ParentUser
+    ADD FOREIGN KEY fk_childId(ChildId)
+    REFERENCES ChildUser(ChildId)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+
+ALTER TABLE ChildUser
+    ADD FOREIGN KEY fk_parentId(ParentId)
+    REFERENCES ParentUser(ParentId)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+
+CREATE TABLE ParentBooks (
+    Id INT NOT NULL AUTO_INCREMENT,
+    ISBN VARCHAR(50) NOT NULL,
+    ParentId VARCHAR(20) NOT NULL,
+    LastAccessed DATETIME NULL,
+
+    PRIMARY KEY (Id),
+    FOREIGN KEY fk_ISBN(ISBN)
+    REFERENCES LibraryBooks(ISBN)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+    FOREIGN KEY fk_parentId(ParentId)
+    REFERENCES ParentUser(ParentId)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+);
+
+CREATE TABLE ChildBooks (
+    Id INT NOT NULL AUTO_INCREMENT,
+    ISBN VARCHAR(50) NOT NULL,
+    ChildId VARCHAR(20) NOT NULL,
+    LastAccessed DATETIME NULL,
+
+    PRIMARY KEY (Id),
+    FOREIGN KEY fk_ISBN(ISBN)
+    REFERENCES LibraryBooks(ISBN)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+    FOREIGN KEY fk_childId(ChildId)
+    REFERENCES ChildUser(ChildId)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+);
